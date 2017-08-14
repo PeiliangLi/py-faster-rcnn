@@ -88,12 +88,8 @@ def vis_detections(im, class_name, dets, thresh=0.5):
     ##plt.draw()
 '''
 
-def demo(net, image_name):
+def demo(net, im_rgb):
     """Detect object classes in an image using pre-computed object proposals."""
-
-    # Load the demo image
-    im_file = os.path.join(cfg.DATA_DIR, 'demo', image_name)
-    im_rgb = cv2.imread(im_file)
 
     im_gray = cv2.cvtColor(im_rgb, cv2.COLOR_RGB2GRAY) ##CV_RGB2GRAY
     im = cv2.cvtColor(im_gray, cv2.COLOR_GRAY2RGB) ##GRAY2RGB
@@ -110,6 +106,7 @@ def demo(net, image_name):
     img = im.copy()
     CONF_THRESH = 0.8
     NMS_THRESH = 0.3
+    detect_result = ''
     for cls_ind, cls in enumerate(CLASSES[1:]):
         cls_ind += 1 # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
@@ -130,11 +127,16 @@ def demo(net, image_name):
             lineColor = (0, 0, 255)
             cv2.rectangle(img, (bbox[0],bbox[1]), (bbox[2], bbox[3]), lineColor,3)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            #cv2.putText(img, cls, (bbox[0] + 10, bbox[1] + 10), font, 1, lineColor, 2, cv2.LINE_AA)
+            cv2.putText(img, '{:s} {:.3f}'.format(cls, score), (int(bbox[0] + 30), int(bbox[1] + 30)), font, 0.6, lineColor, 1, cv2.LINE_AA)
             print cls
 
+            ##detect result: class name, score, box left up, box right bottom
+            detect_result += '{:s} {:.3f} {} {} {} {} '.format(cls, score, bbox[0], bbox[1], bbox[2], bbox[3])
+
     cv2.imshow('result_window', img)
-    cv2.waitKey(25) 
+    cv2.waitKey(1) 
+
+    return detect_result
 
 def parse_args():
     """Parse input arguments."""
@@ -180,11 +182,22 @@ if __name__ == '__main__':
     for i in xrange(2):
         _, _= im_detect(net, im)
 
-    im_names = ['000456.jpg', '000542.jpg', '001150.jpg',
-                '001763.jpg', '004545.jpg']
-    for im_name in im_names:
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Demo for data/demo/{}'.format(im_name)
-        demo(net, im_name)
+    #im_names = ['000456.jpg', '000542.jpg', '001150.jpg',
+    #            '001763.jpg', '004545.jpg']
+    image_cnt = 0
+    data_path = '/home/peiliang/catkin_ws/src/data_bag_wapper/data/person/2017-08-14-first/image'
+    result_file = open('{}/detect_result.csv'.format(data_path), "w")
+
+    for image_cnt in range(0, 1000):
+        image_name = '{}.jpg'.format(image_cnt)
+        image_file = os.path.join(data_path, image_name)
+        print image_file
+
+        im = cv2.imread(image_file)
+
+        detect_result = demo(net, im)
+        print >> result_file, '{} '.format(image_cnt)
+        print >> result_file, detect_result
+        image_cnt += 1
 
     #plt.show()
