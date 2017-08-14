@@ -43,10 +43,27 @@ def vis_detections(im, class_name, dets, thresh=0.5):
     inds = np.where(dets[:, -1] >= thresh)[0]
     if len(inds) == 0:
         return
-
+    
     im = im[:, :, (2, 1, 0)]
     fig, ax = plt.subplots(figsize=(12, 12))
+    print('show image')
     ax.imshow(im, aspect='equal')
+    ## use opencv to visualize
+    img = im.copy()
+    for i in inds:
+        bbox = dets[i, :4]
+        score = dets[i, -1]
+        lineColor = (0, 0, 255)
+        cv2.rectangle(img, (bbox[0],bbox[1]), (bbox[2], bbox[3]), lineColor,3)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(img, class_name,(bbox[0] + 10, bbox[1] + 10), font, 0.3, lineColor, 2, cv2.LINE_AA)
+        print class_name
+
+    cv2.imshow('result_window', img)
+    cv2.waitKey(0) 
+
+
+'''
     for i in inds:
         bbox = dets[i, :4]
         score = dets[i, -1]
@@ -68,15 +85,18 @@ def vis_detections(im, class_name, dets, thresh=0.5):
                   fontsize=14)
     plt.axis('off')
     plt.tight_layout()
-    plt.draw()
+    ##plt.draw()
+'''
 
 def demo(net, image_name):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Load the demo image
     im_file = os.path.join(cfg.DATA_DIR, 'demo', image_name)
-    im = cv2.imread(im_file)
+    im_rgb = cv2.imread(im_file)
 
+    im_gray = cv2.cvtColor(im_rgb, cv2.COLOR_RGB2GRAY) ##CV_RGB2GRAY
+    im = cv2.cvtColor(im_gray, cv2.COLOR_GRAY2RGB) ##GRAY2RGB
     # Detect all object classes and regress object bounds
     timer = Timer()
     timer.tic()
@@ -86,6 +106,8 @@ def demo(net, image_name):
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections for each class
+    im = im[:, :, (2, 1, 0)]
+    img = im.copy()
     CONF_THRESH = 0.8
     NMS_THRESH = 0.3
     for cls_ind, cls in enumerate(CLASSES[1:]):
@@ -96,7 +118,23 @@ def demo(net, image_name):
                           cls_scores[:, np.newaxis])).astype(np.float32)
         keep = nms(dets, NMS_THRESH)
         dets = dets[keep, :]
-        vis_detections(im, cls, dets, thresh=CONF_THRESH)
+        #vis_detections(im, cls, dets, thresh=CONF_THRESH)
+        inds = np.where(dets[:, -1] >= CONF_THRESH)[0]
+        if len(inds) == 0:
+            continue
+    
+        ## use opencv to visualize
+        for i in inds:
+            bbox = dets[i, :4]
+            score = dets[i, -1]
+            lineColor = (0, 0, 255)
+            cv2.rectangle(img, (bbox[0],bbox[1]), (bbox[2], bbox[3]), lineColor,3)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            #cv2.putText(img, cls, (bbox[0] + 10, bbox[1] + 10), font, 1, lineColor, 2, cv2.LINE_AA)
+            print cls
+
+    cv2.imshow('result_window', img)
+    cv2.waitKey(25) 
 
 def parse_args():
     """Parse input arguments."""
@@ -149,4 +187,4 @@ if __name__ == '__main__':
         print 'Demo for data/demo/{}'.format(im_name)
         demo(net, im_name)
 
-    plt.show()
+    #plt.show()
