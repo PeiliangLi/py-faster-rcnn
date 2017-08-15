@@ -88,7 +88,7 @@ def vis_detections(im, class_name, dets, thresh=0.5):
     ##plt.draw()
 '''
 
-def demo(net, im_rgb):
+def demo(net, im_rgb, im_cnt):
     """Detect object classes in an image using pre-computed object proposals."""
 
     im_gray = cv2.cvtColor(im_rgb, cv2.COLOR_RGB2GRAY) ##CV_RGB2GRAY
@@ -131,8 +131,9 @@ def demo(net, im_rgb):
             print cls
 
             ##detect result: class name, score, box left up, box right bottom
-            detect_result += '{:s} {:.3f} {} {} {} {} '.format(cls, score, bbox[0], bbox[1], bbox[2], bbox[3])
+            detect_result += '{} {:s} {:.3f} {} {} {} {} '.format(im_cnt, cls, score, bbox[0], bbox[1], bbox[2], bbox[3])
 
+    detect_result += '{}'.format(-1)
     cv2.imshow('result_window', img)
     cv2.waitKey(1) 
 
@@ -185,8 +186,8 @@ if __name__ == '__main__':
     #im_names = ['000456.jpg', '000542.jpg', '001150.jpg',
     #            '001763.jpg', '004545.jpg']
     image_cnt = 0
-    data_path = '/home/peiliang/catkin_ws/src/data_bag_wapper/data/person/2017-08-14-first/image'
-    result_file = open('{}/detect_result.csv'.format(data_path), "w")
+    data_path = '/home/peiliang/catkin_ws/src/data_bag_wapper/data/2017-08-14-first/'
+    result_file = open('{}detect_result.csv'.format(data_path), "w")
 
     for image_cnt in range(0, 1000):
         image_name = '{}.jpg'.format(image_cnt)
@@ -195,8 +196,7 @@ if __name__ == '__main__':
 
         im = cv2.imread(image_file)
 
-        detect_result = demo(net, im)
-        print >> result_file, '{} '.format(image_cnt)
+        detect_result = demo(net, im, image_cnt)
         print >> result_file, detect_result
         image_cnt += 1
 
